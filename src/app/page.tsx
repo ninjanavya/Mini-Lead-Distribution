@@ -23,9 +23,9 @@ export default function HomePage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Link href="/request-service">
-              <Button className="w-full">Submit Lead Request</Button>
-            </Link>
+            <Button className="w-full" asChild>
+              <Link href="/request-service">Submit Lead Request</Link>
+            </Button>
           </CardContent>
         </Card>
 
@@ -38,9 +38,9 @@ export default function HomePage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Link href="/dashboard">
-              <Button variant="outline" className="w-full">View Dashboard</Button>
-            </Link>
+            <Button variant="outline" className="w-full" asChild>
+              <Link href="/dashboard">View Dashboard</Link>
+            </Button>
           </CardContent>
         </Card>
 
@@ -53,9 +53,9 @@ export default function HomePage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Link href="/test-tools">
-              <Button variant="outline" className="w-full">Open Test Tools</Button>
-            </Link>
+            <Button variant="outline" className="w-full" asChild>
+              <Link href="/test-tools">Open Test Tools</Link>
+            </Button>
           </CardContent>
         </Card>
       </div>
