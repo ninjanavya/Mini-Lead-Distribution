@@ -1,0 +1,144 @@
+// Mini Lead Distribution System — Prisma Schema
+// PostgreSQL with row-level locking for concurrency safety
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ============================================================
+// SERVICES — Pre-seeded service types customers can request
+// ============================================================
+model Service {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  createdAt DateTime @default(now()) @map("created_at")
+
+  leads          Lead[]
+  mandatoryRules MandatoryRule[]
+  poolRules      PoolRule[]
+  roundRobinState RoundRobinState?
+
+  @@map("services")
+}
+
+// ============================================================
+// PROVIDERS — Service providers with monthly quota tracking
+// ============================================================
+model Provider {
+  id           String   @id @default(cuid())
+  name         String   @unique
+  monthlyQuota Int      @default(10) @map("monthly_quota")
+  usedQuota    Int      @default(0) @map("used_quota")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  assignments    LeadAssignment[]
+  mandatoryRules MandatoryRule[]
+  poolRules      PoolRule[]
+
+  @@map("providers")
+}
+
+// ============================================================
+// LEADS — Customer service enquiries
+// Phone + Service must be unique (no duplicate submissions)
+// ============================================================
+model Lead {
+  id          String   @id @default(cuid())
+  name        String
+  phone       String
+  city        String
+  serviceId   String   @map("service_id")
+  description String?
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  service     Service        @relation(fields: [serviceId], references: [id])
+  assignments LeadAssignment[]
+
+  // CRITICAL: Prevents duplicate leads for same phone + service
+  @@unique([phone, serviceId], name: "unique_phone_service")
+  @@map("leads")
+}
+
+// ============================================================
+// LEAD ASSIGNMENTS — Maps leads to their assigned providers
+// Each lead gets exactly 3 providers; no duplicates allowed
+// ============================================================
+model LeadAssignment {
+  id         String   @id @default(cuid())
+  leadId     String   @map("lead_id")
+  providerId String   @map("provider_id")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  lead     Lead     @relation(fields: [leadId], references: [id])
+  provider Provider @relation(fields: [providerId], references: [id])
+
+  // CRITICAL: Prevents assigning same provider to same lead twice
+  @@unique([leadId, providerId], name: "unique_lead_provider")
+  @@map("lead_assignments")
+}
+
+// ============================================================
+// ROUND ROBIN STATE — Persistent fair allocation counter
+// Stored in DB, never in memory. Locked during allocation.
+// ============================================================
+model RoundRobinState {
+  id        String   @id @default(cuid())
+  serviceId String   @unique @map("service_id")
+  lastIndex Int      @default(0) @map("last_index")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  service Service @relation(fields: [serviceId], references: [id])
+
+  @@map("round_robin_state")
+}
+
+// ============================================================
+// WEBHOOK EVENTS — Idempotency tracking for webhook processing
+// Same eventId must never be processed twice
+// ============================================================
+model WebhookEvent {
+  id        String   @id @default(cuid())
+  eventId   String   @unique @map("event_id")
+  type      String
+  processed Boolean  @default(true)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("webhook_events")
+}
+
+// ============================================================
+// MANDATORY RULES — Which providers MUST receive leads
+// for a given service (e.g., Service 1 → Provider 1 always)
+// ============================================================
+model MandatoryRule {
+  id         String @id @default(cuid())
+  serviceId  String @map("service_id")
+  providerId String @map("provider_id")
+
+  service  Service  @relation(fields: [serviceId], references: [id])
+  provider Provider @relation(fields: [providerId], references: [id])
+
+  @@unique([serviceId, providerId], name: "unique_mandatory_rule")
+  @@map("mandatory_rules")
+}
+
+// ============================================================
+// POOL RULES — Additional providers eligible for round-robin
+// allocation for each service type
+// ============================================================
+model PoolRule {
+  id         String @id @default(cuid())
+  serviceId  String @map("service_id")
+  providerId String @map("provider_id")
+
+  service  Service  @relation(fields: [serviceId], references: [id])
+  provider Provider @relation(fields: [providerId], references: [id])
+
+  @@unique([serviceId, providerId], name: "unique_pool_rule")
+  @@map("pool_rules")
+}
