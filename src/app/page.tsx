@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import { Button, buttonVariants } from '@/components/ui/button';
 
 export default function HomePage() {
   return (
@@ -23,9 +23,9 @@ export default function HomePage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Button className="w-full" asChild>
-              <Link href="/request-service">Submit Lead Request</Link>
-            </Button>
+            <Link href="/request-service" className={buttonVariants({ className: "w-full" })}>
+              Submit Lead Request
+            </Link>
           </CardContent>
         </Card>
 
@@ -38,9 +38,9 @@ export default function HomePage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Button variant="outline" className="w-full" asChild>
-              <Link href="/dashboard">View Dashboard</Link>
-            </Button>
+            <Link href="/dashboard" className={buttonVariants({ variant: "outline", className: "w-full" })}>
+              View Dashboard
+            </Link>
           </CardContent>
         </Card>
 
@@ -53,9 +53,9 @@ export default function HomePage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Button variant="outline" className="w-full" asChild>
-              <Link href="/test-tools">Open Test Tools</Link>
-            </Button>
+            <Link href="/test-tools" className={buttonVariants({ variant: "outline", className: "w-full" })}>
+              Open Test Tools
+            </Link>
           </CardContent>
         </Card>
       </div>
